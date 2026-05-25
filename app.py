@@ -97,7 +97,7 @@ MAPA_PAISES = {
     "Paraguai":        "Paraguay",
     "Portugal":        "Portugal",
     "RD Congo":        "DR Congo",
-    "República Tcheca": "Czech Republic",
+    "República Tcheca":"Czech Republic",
     "Senegal":         "Senegal",
     "Suécia":          "Sweden",
     "Tunísia":         "Tunisia",
@@ -145,7 +145,6 @@ POSICOES_EN = [
 # CARREGAMENTO DE DADOS (CACHE)
 # ==============================================================================
 
-
 @st.cache_data
 def carregar_lesoes():
     for enc in ["utf-8", "latin-1"]:
@@ -153,13 +152,11 @@ def carregar_lesoes():
             df = pd.read_csv("lesoes_jogadores_mundial_REAL.csv",
                              encoding=enc, on_bad_lines="skip")
             df["lesao_grave"] = (df["dias_parado"] > 21).astype(int)
-            df["lesao_moderada"] = (
-                df["dias_parado"].between(8, 21)).astype(int)
+            df["lesao_moderada"] = (df["dias_parado"].between(8, 21)).astype(int)
             return df
         except Exception:
             pass
     return None
-
 
 @st.cache_data
 def carregar_convocados():
@@ -169,7 +166,6 @@ def carregar_convocados():
         except Exception:
             pass
     return None
-
 
 @st.cache_resource
 def carregar_pipeline():
@@ -204,15 +200,13 @@ def carregar_pipeline():
             pass
     return resultado
 
-
-df_lesoes = carregar_lesoes()
+df_lesoes    = carregar_lesoes()
 df_convocados = carregar_convocados()
-pipeline = carregar_pipeline()
+pipeline     = carregar_pipeline()
 
 # ==============================================================================
 # FUNÇÕES DE ANÁLISE
 # ==============================================================================
-
 
 def obter_subset(pais_pt: str, posicao: str, idade: int, janela: int = 5) -> pd.DataFrame:
     """
@@ -223,9 +217,8 @@ def obter_subset(pais_pt: str, posicao: str, idade: int, janela: int = 5) -> pd.
         return pd.DataFrame()
 
     pais_en = MAPA_PAISES.get(pais_pt, pais_pt)
-    mask_pos = df_lesoes["posicao"] == posicao
-    mask_pais = df_lesoes["nacionalidade"].str.contains(
-        pais_en, regex=False, na=False)
+    mask_pos  = df_lesoes["posicao"] == posicao
+    mask_pais = df_lesoes["nacionalidade"].str.contains(pais_en, regex=False, na=False)
 
     for j in [janela, janela + 3, janela + 6, 99]:
         mask_idade = df_lesoes["idade_atual"].between(idade - j, idade + j)
@@ -261,13 +254,12 @@ def calcular_risco(pais_pt: str, posicao: str, idade: int) -> dict:
         top_lesoes = []
         pct_grave = 0.35
     else:
-        pct_grave = subset["lesao_grave"].mean()
-        pct_moderada = subset["lesao_moderada"].mean()
-        dias_medio = subset["dias_parado"].mean()
-        jogos_perdidos_med = subset["jogos_perdidos"].mean(
-        ) if subset["jogos_perdidos"].notna().any() else 4.0
-        top_lesoes = subset["lesao"].value_counts().head(5).index.tolist()
-        prob_base = pct_grave
+        pct_grave       = subset["lesao_grave"].mean()
+        pct_moderada    = subset["lesao_moderada"].mean()
+        dias_medio      = subset["dias_parado"].mean()
+        jogos_perdidos_med = subset["jogos_perdidos"].mean() if subset["jogos_perdidos"].notna().any() else 4.0
+        top_lesoes      = subset["lesao"].value_counts().head(5).index.tolist()
+        prob_base       = pct_grave
 
     # ── Ajustes contextuais ──────────────────────────────────────────────────
     # Altitude: acima de 500m aumenta risco muscular
@@ -299,8 +291,7 @@ def calcular_risco(pais_pt: str, posicao: str, idade: int) -> dict:
     else:
         fator_idade = 0.07
 
-    prob_final = prob_base + fator_altitude + \
-        fator_descanso + fator_jogos + fator_idade
+    prob_final = prob_base + fator_altitude + fator_descanso + fator_jogos + fator_idade
     prob_final = float(min(max(prob_final, 0.05), 0.95))
 
     risco_bio = RISCO_BIO_POR_POSICAO.get(posicao, 3.0)
@@ -333,12 +324,12 @@ def prever_com_modelo(pais_pt: str, posicao: str, idade: float, resultado_heur: 
 
     log = LOGISTICA.get(pais_pt, DEFAULT_LOG)
     risco_bio = resultado_heur["risco_bio"]
-    carga = resultado_heur["dias_medio"]
-    n_lesoes = max(1, round(resultado_heur["jogos_perdidos"] / 5))
+    carga     = resultado_heur["dias_medio"]
+    n_lesoes  = max(1, round(resultado_heur["jogos_perdidos"] / 5))
 
-    idade_x_jogos = idade * log["jogos"]
+    idade_x_jogos    = idade * log["jogos"]
     idade_x_altitude = idade * log["altitude"]
-    descanso_rel = log["descanso"] / (idade + 1)
+    descanso_rel     = log["descanso"] / (idade + 1)
 
     dados = {
         "carga_lesao_historica": [carga],
@@ -371,7 +362,6 @@ def prever_com_modelo(pais_pt: str, posicao: str, idade: float, resultado_heur: 
         return float(prob)
     except Exception:
         return None
-
 
 # ==============================================================================
 # TÍTULO
@@ -421,12 +411,10 @@ with aba_prev:
     st.divider()
 
     # ── Cálculo ───────────────────────────────────────────────────────────────
-    res = calcular_risco(pais_escolhido, posicao_escolhida,
-                         int(idade_escolhida))
+    res = calcular_risco(pais_escolhido, posicao_escolhida, int(idade_escolhida))
 
     # Tentar modelo treinado; fallback nos dados reais
-    prob_modelo = prever_com_modelo(
-        pais_escolhido, posicao_escolhida, idade_escolhida, res)
+    prob_modelo = prever_com_modelo(pais_escolhido, posicao_escolhida, idade_escolhida, res)
     if prob_modelo is not None:
         prob_final = prob_modelo
         fonte_prob = f"Modelo ML ({pipeline['nome']})"
@@ -511,13 +499,11 @@ with aba_prev:
         st.markdown("**📈 Impacto dos factores contextuais na probabilidade:**")
 
         fatores = [
-            ("📊 Base histórica (pos + país + idade)",
-             res["prob_base"] * 100, "#4f9cf9"),
+            ("📊 Base histórica (pos + país + idade)", res["prob_base"] * 100, "#4f9cf9"),
             ("🏔️ Altitude", res["fator_altitude"], "#9b87f5"),
             ("😴 Dias de descanso", res["fator_descanso"], "#f59b0a"),
             ("🎮 Nº de jogos na fase", res["fator_jogos"], "#10b981"),
-            ("🎂 Idade (" + str(int(idade_escolhida)) + " anos)",
-             res["fator_idade"], "#f43f5e"),
+            ("🎂 Idade (" + str(int(idade_escolhida)) + " anos)", res["fator_idade"], "#f43f5e"),
         ]
 
         for label, valor, cor in fatores:
@@ -533,82 +519,229 @@ with aba_prev:
         # Tipos de lesão mais frequentes nesta posição/contexto
         if res["top_lesoes"]:
             st.markdown("**🩹 Lesões mais frequentes (posição + perfil):**")
-            tags = "".join(
-                f'<span class="tag-lesao">{l}</span>' for l in res["top_lesoes"])
-            st.markdown(
-                f'<div style="margin-top:4px">{tags}</div>', unsafe_allow_html=True)
+            tags = "".join(f'<span class="tag-lesao">{l}</span>' for l in res["top_lesoes"])
+            st.markdown(f'<div style="margin-top:4px">{tags}</div>', unsafe_allow_html=True)
 
     st.divider()
 
     # ── Insight narrativo ─────────────────────────────────────────────────────
-    st.subheader("💡 Insight")
+    st.subheader("💡 Análise do Preparador Físico")
 
-    pais_en = res["pais_en"]
-    alt = res["altitude"]
+    alt  = res["altitude"]
     desc = res["descanso"]
+    bio  = res["risco_bio"]
+    dias = res["dias_medio"]
+    idade = int(idade_escolhida)
 
-    # Construir insight dinâmico
-    insight_partes = []
+    # ── Dicionários de conhecimento clínico por posição ────────────────────────
+    GRUPOS_MUSCULARES = {
+        "Goalkeeper":          "isquiotibiais, ombros e coluna lombar",
+        "Centre-Back":         "isquiotibiais, joelhos (ligamento cruzado) e adutores",
+        "Left-Back":           "isquiotibiais, adutores e gémeos",
+        "Right-Back":          "isquiotibiais, adutores e gémeos",
+        "Defensive Midfield":  "isquiotibiais, joelhos e tornozelos",
+        "Central Midfield":    "isquiotibiais, gémeos e tornozelos",
+        "Left Midfield":       "isquiotibiais, adutores e gémeos",
+        "Right Midfield":      "isquiotibiais, adutores e gémeos",
+        "Attacking Midfield":  "isquiotibiais, quadricípites e tornozelos",
+        "Left Winger":         "isquiotibiais, adutores, gémeos e tornozelos",
+        "Right Winger":        "isquiotibiais, adutores, gémeos e tornozelos",
+        "Centre-Forward":      "isquiotibiais, quadricípites, joelhos e adutores",
+        "Second Striker":      "isquiotibiais, quadricípites e tornozelos",
+    }
+
+    MECANISMO_LESAO = {
+        "Goalkeeper":          "esforços explosivos de curta duração, mergulhos e colisões — o contacto com o solo e a extensão rápida dos membros superiores são os principais vectores de lesão",
+        "Centre-Back":         "duelos aéreos, travagens bruscas e acelerações curtas repetidas — o ligamento cruzado anterior é o principal alvo em situações de mudança de direcção",
+        "Left-Back":           "sprints repetidos ao longo da linha lateral, combinados com cruzamentos em extensão — a sobrecarga dos adutores é o principal risco",
+        "Right-Back":          "sprints repetidos ao longo da linha lateral, combinados com cruzamentos em extensão — a sobrecarga dos adutores é o principal risco",
+        "Defensive Midfield":  "volume elevado de corrida (12–14km por jogo), duelos físicos constantes e acções defensivas em travagem — a fadiga acumulada é o principal factor",
+        "Central Midfield":    "volume total de corrida mais alto em campo (frequentemente >13km), com variações constantes de ritmo — a sobrecarga crónica dos isquiotibiais é o risco dominante",
+        "Left Midfield":       "combinação de volume de corrida elevado com arranques explosivos nas transições — perfil de fadiga muscular acumulada ao longo do torneio",
+        "Right Midfield":      "combinação de volume de corrida elevado com arranques explosivos nas transições — perfil de fadiga muscular acumulada ao longo do torneio",
+        "Attacking Midfield":  "acelerações explosivas em espaços reduzidos, mudanças de direcção rápidas e receção de bola sob pressão — o padrão de lesão é tipicamente muscular agudo",
+        "Left Winger":         "sprints máximos repetidos (velocidades de pico acima de 30km/h), arranques e paragens abruptas — o mecanismo de lesão é quase sempre muscular por sobrecarga de alta intensidade",
+        "Right Winger":        "sprints máximos repetidos (velocidades de pico acima de 30km/h), arranques e paragens abruptas — o mecanismo de lesão é quase sempre muscular por sobrecarga de alta intensidade",
+        "Centre-Forward":      "acelerações explosivas, duelos físicos frontais e remates de alta potência — o pico de tensão nos isquiotibiais no momento do remate é o principal vector de ruptura",
+        "Second Striker":      "movimentos de ruptura entre linhas, receção em profundidade e finalização — perfil de lesão misto entre explosividade e contacto",
+    }
+
+    PROTOCOLO_RISCO_ALTO = {
+        "Goalkeeper":          "monitorização diária da mobilidade lombar e dos ombros; reduzir o volume de treino de remates antes dos jogos; protocolo de aquecimento específico para membros superiores",
+        "Centre-Back":         "reforço preventivo do quadricípite e dos estabilizadores do joelho (protocolo Nordic Hamstring); evitar treinos de alta intensidade nas 48h anteriores ao jogo",
+        "Left-Back":           "trabalho específico de adutores (protocolo Copenhagen) 3x/semana; gestão cuidadosa do volume de sprints nos treinos",
+        "Right-Back":          "trabalho específico de adutores (protocolo Copenhagen) 3x/semana; gestão cuidadosa do volume de sprints nos treinos",
+        "Defensive Midfield":  "monitorização da carga GPS (distância total e sprints de alta intensidade); recuperação activa obrigatória no dia seguinte ao jogo",
+        "Central Midfield":    "protocolo Nordic Hamstring obrigatório; limitar o volume de treino de alta intensidade a <20min nas sessões entre jogos",
+        "Left Midfield":       "monitorização GPS rigorosa; dias de treino reduzido quando a distância total superar 11km no jogo anterior",
+        "Right Midfield":      "monitorização GPS rigorosa; dias de treino reduzido quando a distância total superar 11km no jogo anterior",
+        "Attacking Midfield":  "aquecimento prolongado (mínimo 20min) com ênfase em activação de isquiotibiais e tornozelos; crioterapia pós-jogo como rotina",
+        "Left Winger":         "protocolo Nordic Hamstring 2x/semana; limitar sprints máximos nos treinos após jogo; monitorização de rigidez muscular por palpação diária",
+        "Right Winger":        "protocolo Nordic Hamstring 2x/semana; limitar sprints máximos nos treinos após jogo; monitorização de rigidez muscular por palpação diária",
+        "Centre-Forward":      "protocolo Nordic Hamstring obrigatório; reduzir volume de remates nos treinos pré-jogo; vigilância específica ao padrão de corrida (assimetrias > 10% são sinal de alerta)",
+        "Second Striker":      "trabalho de mobilidade de tornozelos e activação de quadricípites no aquecimento; atenção especial a sinais de fadiga nas 72h pós-jogo",
+    }
+
+    PROTOCOLO_RISCO_MODERADO = {
+        "Goalkeeper":          "aquecimento específico para membros superiores e coluna; protocolo de fortalecimento isométrico dos ombros entre jogos",
+        "Centre-Back":         "trabalho de estabilidade do joelho 2x/semana; monitorização de dor ou rigidez após duelos aéreos",
+        "Left-Back":           "protocolo Copenhagen de adutores 2x/semana; gestão do volume de sprints laterais",
+        "Right-Back":          "protocolo Copenhagen de adutores 2x/semana; gestão do volume de sprints laterais",
+        "Defensive Midfield":  "recuperação activa no dia seguinte ao jogo (natação ou ciclismo de baixa intensidade); monitorização subjectiva de fadiga",
+        "Central Midfield":    "protocolo Nordic Hamstring preventivo 2x/semana; atenção a sinais de rigidez nos isquiotibiais",
+        "Left Midfield":       "monitorização GPS; incluir trabalho de mobilidade de tornozelos no aquecimento",
+        "Right Midfield":      "monitorização GPS; incluir trabalho de mobilidade de tornozelos no aquecimento",
+        "Attacking Midfield":  "aquecimento dinâmico focado em isquiotibiais e tornozelos; crioterapia preventiva após treinos de alta intensidade",
+        "Left Winger":         "Nordic Hamstring 2x/semana; palpação diária dos isquiotibiais para detecção precoce de rigidez",
+        "Right Winger":        "Nordic Hamstring 2x/semana; palpação diária dos isquiotibiais para detecção precoce de rigidez",
+        "Centre-Forward":      "Nordic Hamstring preventivo; reduzir volume de remates de potência máxima nos treinos",
+        "Second Striker":      "mobilidade de tornozelos e activação de quadricípites no aquecimento; monitorização de fadiga muscular",
+    }
+
+    PROTOCOLO_RISCO_BAIXO = {
+        "Goalkeeper":          "manutenção do protocolo standard; atenção aos ombros em sessões de remates intensas",
+        "Centre-Back":         "manutenção do protocolo standard; sem restrições específicas",
+        "Left-Back":           "manutenção standard; atenção ao volume de cruzamentos nos treinos",
+        "Right-Back":          "manutenção standard; atenção ao volume de cruzamentos nos treinos",
+        "Defensive Midfield":  "manutenção standard; monitorização de fadiga após jogos intensos",
+        "Central Midfield":    "manutenção standard; Nordic Hamstring como prevenção geral",
+        "Left Midfield":       "manutenção standard",
+        "Right Midfield":      "manutenção standard",
+        "Attacking Midfield":  "manutenção standard; aquecimento dinâmico adequado antes de sessões técnicas",
+        "Left Winger":         "manutenção standard; Nordic Hamstring preventivo",
+        "Right Winger":        "manutenção standard; Nordic Hamstring preventivo",
+        "Centre-Forward":      "manutenção standard; atenção ao padrão de remate em treinos de finalização",
+        "Second Striker":      "manutenção standard",
+    }
+
+    grupos    = GRUPOS_MUSCULARES.get(posicao_escolhida, "isquiotibiais e articulações dos membros inferiores")
+    mecanismo = MECANISMO_LESAO.get(posicao_escolhida, "esforços de alta intensidade e mudanças de direcção")
 
     if prob_final >= 0.50:
-        insight_partes.append(
-            f"**{pais_escolhido}** apresenta **alto risco histórico de lesão** "
-            f"na posição **{posicao_escolhida}** com {int(idade_escolhida)} anos."
-        )
+        protocolo = PROTOCOLO_RISCO_ALTO.get(posicao_escolhida, "monitorização intensiva e redução de carga")
+        cor_alerta = "#ff4444"
+        emoji_alerta = "🚨"
+        nivel_texto = "ALTO RISCO — Intervenção Preventiva Prioritária"
     elif prob_final >= 0.33:
-        insight_partes.append(
-            f"**{pais_escolhido}** apresenta **risco moderado** de lesão na posição "
-            f"**{posicao_escolhida}** com {int(idade_escolhida)} anos."
+        protocolo = PROTOCOLO_RISCO_MODERADO.get(posicao_escolhida, "protocolos preventivos standard reforçados")
+        cor_alerta = "#ffaa00"
+        emoji_alerta = "⚠️"
+        nivel_texto = "RISCO MODERADO — Monitorização Activa Recomendada"
+    else:
+        protocolo = PROTOCOLO_RISCO_BAIXO.get(posicao_escolhida, "manutenção do protocolo standard")
+        cor_alerta = "#44ff88"
+        emoji_alerta = "✅"
+        nivel_texto = "RISCO CONTROLADO — Manutenção do Protocolo Standard"
+
+    # ── Construir blocos do insight ───────────────────────────────────────────
+
+    # Bloco 1: Avaliação biomecânica
+    bio_texto = (
+        f"Com um risco biomecânico de **{bio:.1f}/6**, a posição **{posicao_escolhida}** "
+        f"exige esforços de **{mecanismo}**. "
+        f"Os grupos musculares mais expostos são os **{grupos}**. "
+        f"Historicamente, jogadores nesta posição ficam parados em média **{dias:.0f} dias** por lesão grave."
+    )
+
+    # Bloco 2: Perfil etário
+    if idade < 22:
+        idade_texto = (
+            f"Aos **{idade} anos**, o jogador está numa fase de maturação muscular e tendinosa ainda incompleta. "
+            "O risco de lesões por sobreuso e stress de crescimento é relevante, "
+            "especialmente em torneios com jogos consecutivos em poucos dias."
+        )
+    elif idade <= 27:
+        idade_texto = (
+            f"Com **{idade} anos**, o jogador está no pico da capacidade de recuperação muscular. "
+            "A aptidão física está no seu máximo, mas a intensidade competitiva do Mundial "
+            "pode criar picos de fadiga acumulada que não devem ser subestimados."
+        )
+    elif idade <= 32:
+        idade_texto = (
+            f"Aos **{idade} anos**, o jogador entra na fase em que a recuperação começa a ser mais lenta "
+            "e a fadiga acumulada tem maior impacto. "
+            "A gestão da carga entre jogos é crítica — o risco de lesão muscular aumenta "
+            "significativamente quando o intervalo de recuperação é inferior a 5 dias."
         )
     else:
-        insight_partes.append(
-            f"**{pais_escolhido}** apresenta **baixo risco histórico** de lesão "
-            f"na posição **{posicao_escolhida}** com {int(idade_escolhida)} anos."
+        idade_texto = (
+            f"Com **{idade} anos**, o perfil de recuperação muscular está claramente comprometido. "
+            "A elasticidade tendinosa reduz-se, a regeneração muscular é mais lenta "
+            "e a probabilidade de lesões recorrentes aumenta. "
+            "A gestão de carga é o factor mais determinante neste perfil etário."
         )
 
+    # Bloco 3: Contexto logístico
+    ctx_partes = []
     if alt > 2000:
-        insight_partes.append(
-            f"A altitude de **{alt:.0f}m** é um factor crítico — altitudes acima de 2000m "
-            "aumentam significativamente o stress muscular e o risco de lesões por fadiga."
+        ctx_partes.append(
+            f"A altitude de **{alt:.0f}m** é o factor ambiental mais crítico deste perfil. "
+            "Acima dos 2.000m, a pressão parcial de oxigénio reduz-se em ~20%, "
+            "aumentando o stress cardiorrespiratório, a fadiga muscular e a susceptibilidade a lesões. "
+            "Requer aclimatação mínima de 72h antes do primeiro jogo e hidratação intensificada."
         )
-    elif alt > 500:
-        insight_partes.append(
-            f"A altitude de **{alt:.0f}m** tem um impacto moderado no esforço físico."
+    elif alt > 1000:
+        ctx_partes.append(
+            f"A altitude de **{alt:.0f}m** representa um esforço adicional mensurável — "
+            "o consumo de oxigénio aumenta cerca de 8–12%, o que se traduz numa fadiga muscular acumulada superior ao habitual."
+        )
+    elif alt > 300:
+        ctx_partes.append(
+            f"A altitude de **{alt:.0f}m** tem impacto fisiológico ligeiro mas não negligenciável "
+            "em jogadores habitualmente treinados ao nível do mar."
         )
 
     if desc < 4:
-        insight_partes.append(
-            f"Com apenas **{desc:.1f} dias de descanso** médio entre jogos, "
-            "a recuperação muscular é insuficiente — fator de risco relevante."
+        ctx_partes.append(
+            f"Com **{desc:.1f} dias de descanso** médio entre jogos, o tempo de regeneração muscular "
+            "é claramente insuficiente. A literatura desportiva indica que são necessários pelo menos "
+            "5–6 dias para recuperação completa de fibras musculares após esforço máximo. "
+            "Abaixo desse limiar, o risco de lesão muscular quase duplica."
+        )
+    elif desc < 5.5:
+        ctx_partes.append(
+            f"Os **{desc:.1f} dias de descanso** entre jogos estão no limite aceitável. "
+            "Protocolo de recuperação activa (crioterapia, piscina, compressão) deve ser rigoroso."
         )
 
-    if bio >= 5.0:
-        insight_partes.append(
-            f"A posição **{posicao_escolhida}** tem o risco biomecânico mais elevado "
-            f"(**{bio}/6**), associado a maior exposição ao contacto físico e carga articular."
-        )
+    ctx_texto = " ".join(ctx_partes) if ctx_partes else None
 
-    if idade_escolhida > 31:
-        insight_partes.append(
-            f"A idade de **{int(idade_escolhida)} anos** está na fase de maior vulnerabilidade "
-            "a lesões musculares e tendinosas, com recuperação mais lenta."
-        )
-    elif idade_escolhida < 22:
-        insight_partes.append(
-            f"Aos **{int(idade_escolhida)} anos**, o perfil muscular ainda está em desenvolvimento, "
-            "o que pode aumentar o risco de lesões de crescimento e sobreuso."
-        )
+    # Bloco 4: Recomendação do preparador
+    recomendacao_texto = (
+        f"**Recomendação:** {protocolo}."
+    )
+
+    # ── Renderizar ────────────────────────────────────────────────────────────
+    st.markdown(f"""
+    <div style="border:1px solid {cor_alerta}; border-radius:10px; padding:0.6rem 1rem;
+                margin-bottom:1rem; background: rgba(0,0,0,0.2)">
+        <span style="color:{cor_alerta}; font-weight:700; font-size:0.95rem">
+            {emoji_alerta} {nivel_texto}
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    blocos = [
+        ("⚙️ Avaliação Biomecânica", bio_texto),
+        ("🎂 Perfil Etário", idade_texto),
+    ]
+    if ctx_texto:
+        blocos.append(("🗺️ Contexto Logístico", ctx_texto))
+    blocos.append(("📋 Protocolo Recomendado", recomendacao_texto))
+
+    for titulo, conteudo in blocos:
+        st.markdown(f"""
+        <div class="insight-box" style="margin-bottom:0.6rem">
+            <div style="font-size:0.8rem; color:#888; margin-bottom:4px">{titulo}</div>
+            <div style="font-size:0.93rem; line-height:1.6">{conteudo}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     if res["n_registos"] < 10:
-        insight_partes.append(
-            f"⚠️ *Nota: análise baseada em {res['n_registos']} registos. "
-            "Dados insuficientes para esta combinação — a estimativa usa a média geral da posição.*"
+        st.caption(
+            f"⚠️ Análise baseada em {res['n_registos']} registos para esta combinação específica "
+            "— interpretação com cautela."
         )
-
-    for parte in insight_partes:
-        st.markdown(f"""
-        <div class="insight-box" style="margin-bottom:0.5rem">{parte}</div>
-        """, unsafe_allow_html=True)
 
 # ==============================================================================
 # ABA 2 — CONVOCADOS
@@ -617,8 +750,7 @@ with aba_conv:
     st.header("📋 Convocados por Seleção — Mundial 2026")
 
     if df_convocados is not None:
-        pais_aba2 = st.selectbox("Seleciona a Seleção", sorted(
-            MAPA_PAISES.keys()), key="aba2")
+        pais_aba2 = st.selectbox("Seleciona a Seleção", sorted(MAPA_PAISES.keys()), key="aba2")
         log2 = LOGISTICA.get(pais_aba2, DEFAULT_LOG)
 
         c1, c2, c3 = st.columns(3)
@@ -627,8 +759,7 @@ with aba_conv:
         c3.metric("🎮 Jogos fase grupos", str(log2["jogos"]))
 
         if log2["altitude"] > 1500:
-            st.warning(
-                f"⛰️ Altitude elevada ({log2['altitude']:.0f}m) — risco adicional de lesões musculares.")
+            st.warning(f"⛰️ Altitude elevada ({log2['altitude']:.0f}m) — risco adicional de lesões musculares.")
 
         st.divider()
 
@@ -651,8 +782,7 @@ with aba_metricas:
     st.header("📊 Modelo & Métricas de Validação")
 
     if pipeline["modelo"] is not None:
-        st.success(
-            f"✅ Modelo activo: **{pipeline['nome']}** · Threshold: {pipeline['threshold']*100:.0f}%")
+        st.success(f"✅ Modelo activo: **{pipeline['nome']}** · Threshold: {pipeline['threshold']*100:.0f}%")
     else:
         st.info(
             "📁 Ficheiros `.pkl` não encontrados — a app usa análise estatística directa "
