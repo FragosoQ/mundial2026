@@ -208,13 +208,14 @@ pipeline     = carregar_pipeline()
 # FUNÇÕES DE ANÁLISE
 # ==============================================================================
 
-def obter_subset(pais_pt: str, posicao: str, idade: int, janela: int = 5) -> pd.DataFrame:
+def obter_subset(pais_pt: str, posicao: str, idade: int, janela: int = 5) -> tuple:
     """
     Filtra o dataset de lesões reais por país (via contains), posição e faixa etária.
     Aumenta a janela progressivamente se não houver dados suficientes.
+    Devolve (DataFrame, origem) onde origem é 'pais' ou 'global'.
     """
     if df_lesoes is None:
-        return pd.DataFrame()
+        return pd.DataFrame(), "global"
 
     pais_en = MAPA_PAISES.get(pais_pt, pais_pt)
     mask_pos  = df_lesoes["posicao"] == posicao
@@ -224,18 +225,18 @@ def obter_subset(pais_pt: str, posicao: str, idade: int, janela: int = 5) -> pd.
         mask_idade = df_lesoes["idade_atual"].between(idade - j, idade + j)
         subset = df_lesoes[mask_pais & mask_pos & mask_idade]
         if len(subset) >= 5:
-            return subset
+            return subset, "pais"
         if j == 99:
             break
 
-    # Sem dados de país: só posição + idade
+    # Sem dados de país: só posição + idade (média global da posição)
     for j in [janela, janela + 3, 99]:
         mask_idade = df_lesoes["idade_atual"].between(idade - j, idade + j)
         subset = df_lesoes[mask_pos & mask_idade]
         if len(subset) >= 10:
-            return subset
+            return subset, "global"
 
-    return df_lesoes[mask_pos]
+    return df_lesoes[mask_pos], "global"
 
 
 def calcular_risco(pais_pt: str, posicao: str, idade: int) -> dict:
@@ -243,7 +244,7 @@ def calcular_risco(pais_pt: str, posicao: str, idade: int) -> dict:
     Calcula probabilidade de lesão grave e métricas a partir dos dados reais.
     Incorpora impacto de altitude, dias de descanso e número de jogos.
     """
-    subset = obter_subset(pais_pt, posicao, idade)
+    subset, origem_dados = obter_subset(pais_pt, posicao, idade)
     log = LOGISTICA.get(pais_pt, DEFAULT_LOG)
 
     n_registos = len(subset)
@@ -281,12 +282,13 @@ def calcular_risco(pais_pt: str, posicao: str, idade: int) -> dict:
     # Carga de jogos
     fator_jogos = (log["jogos"] - 3) * 0.02  # base = 3 jogos
 
-    # Idade: pico de risco entre 28-33, menor nos jovens e seniores raros
+    # Idade: pico de risco a partir dos 30 (fisiologicamente correcto)
+    # <22 ainda em maturação | 22-29 pico físico | 30-33 recuperação mais lenta | >33 vulnerabilidade tendinosa
     if idade < 22:
         fator_idade = -0.03
-    elif idade <= 27:
+    elif idade <= 29:
         fator_idade = 0.0
-    elif idade <= 32:
+    elif idade <= 33:
         fator_idade = 0.04
     else:
         fator_idade = 0.07
@@ -312,6 +314,7 @@ def calcular_risco(pais_pt: str, posicao: str, idade: int) -> dict:
         "descanso":          log["descanso"],
         "jogos":             log["jogos"],
         "pais_en":           MAPA_PAISES.get(pais_pt, pais_pt),
+        "origem_dados":      origem_dados,
     }
 
 
@@ -449,7 +452,7 @@ with aba_prev:
                 {nivel_risco}
             </div>
             <div style="font-size:0.78rem; color:#888; margin-top:0.8rem">
-                {fonte_prob} · {res['n_registos']} registos analisados
+                {fonte_prob} · {res['n_registos']} registos {"de " + pais_escolhido if res['origem_dados'] == 'pais' else "(média global da posição)"}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -464,6 +467,17 @@ with aba_prev:
         </div>
         <div style="text-align:right; font-size:0.8rem; color:#888">{barra_pct}% probabilidade</div>
         """, unsafe_allow_html=True)
+
+        # Fonte dos dados e aviso de fallback
+        if res["origem_dados"] == "global":
+            st.markdown(f"""
+            <div style="background:#2a1f00; border:1px solid #f59b0a; border-radius:8px;
+                        padding:0.6rem 1rem; margin:0.5rem 0; font-size:0.85rem; color:#f59b0a">
+                ⚠️ <b>Sem dados históricos para {pais_escolhido} nesta posição</b> —
+                probabilidade calculada com base na média global da posição
+                ({res['n_registos']} registos de todos os países).
+            </div>
+            """, unsafe_allow_html=True)
 
         # Métricas rápidas
         st.markdown("**📊 Dados históricos da selecção + posição:**")
