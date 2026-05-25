@@ -413,8 +413,65 @@ with aba_prev:
 
     st.divider()
 
-    # ── Cálculo ───────────────────────────────────────────────────────────────
+    # ── Cálculo base (dados históricos) ──────────────────────────────────────
     res = calcular_risco(pais_escolhido, posicao_escolhida, int(idade_escolhida))
+
+    # ── Slider de altitude (simulação manual) ────────────────────────────────
+    altitude_default = int(LOGISTICA.get(pais_escolhido, DEFAULT_LOG)["altitude"])
+    st.markdown("**🏔️ Simular impacto da altitude**")
+    st.caption(
+        "A altitude abaixo corresponde à sede real do país seleccionado. "
+        "Ajusta para explorar cenários hipotéticos e ver o impacto directo na probabilidade."
+    )
+    col_sl, col_ref = st.columns([3, 1], gap="medium")
+    with col_sl:
+        altitude_manual = st.slider(
+            "Altitude (metros)",
+            min_value=0, max_value=3500, step=50,
+            value=altitude_default,
+            format="%d m",
+            label_visibility="collapsed"
+        )
+    with col_ref:
+        referencia = ""
+        if altitude_manual == 0:
+            referencia = "🌊 Nível do mar"
+        elif altitude_manual <= 200:
+            referencia = "🏙️ Lisboa / Madrid"
+        elif altitude_manual <= 600:
+            referencia = "🏙️ Cidade do Cabo"
+        elif altitude_manual <= 1200:
+            referencia = "🏙️ Nairobi"
+        elif altitude_manual <= 1800:
+            referencia = "🏙️ Joanesburgo"
+        elif altitude_manual <= 2300:
+            referencia = "🏙️ Cidade do México"
+        elif altitude_manual <= 2800:
+            referencia = "🏔️ Bogotá"
+        else:
+            referencia = "🏔️ La Paz"
+        st.markdown(f"<div style='padding-top:8px; color:#aaa; font-size:0.85rem'>{referencia}</div>",
+                    unsafe_allow_html=True)
+
+    # Recalcular fator de altitude com o valor do slider
+    if altitude_manual > 2000:
+        fator_alt_manual = 0.08
+    elif altitude_manual > 1000:
+        fator_alt_manual = 0.05
+    elif altitude_manual > 500:
+        fator_alt_manual = 0.02
+    else:
+        fator_alt_manual = 0.0
+
+    # Substituir fator de altitude no resultado
+    delta_altitude = fator_alt_manual - (res["fator_altitude"] / 100)
+    prob_ajustada  = float(min(max(res["probabilidade"] + delta_altitude, 0.05), 0.95))
+    res = dict(res)
+    res["altitude"]       = altitude_manual
+    res["fator_altitude"] = round(fator_alt_manual * 100, 1)
+    res["probabilidade"]  = prob_ajustada
+
+    st.divider()
 
     # Tentar modelo treinado; fallback nos dados reais
     prob_modelo = prever_com_modelo(pais_escolhido, posicao_escolhida, idade_escolhida, res)
