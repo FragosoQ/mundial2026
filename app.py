@@ -70,38 +70,64 @@ st.markdown("""
 # MAPEAMENTOS
 # ==============================================================================
 
-# Nome PT (convocados) → Nome EN (lesões)
+# Nome PT → Nome EN (como aparece no dataset de lesões)
+# 48 seleções do Mundial 2026
 MAPA_PAISES = {
-    "Alemanha":        "Germany",
-    "Argentina":       "Argentina",
-    "Brasil":          "Brazil",
-    "Bélgica":         "Belgium",
-    "Cabo Verde":      "Cape Verde",
-    "Colômbia":        "Colombia",
-    "Coreia do Sul":   "Korea",
-    "Costa do Marfim": "Cote d'Ivoire",
-    "Croácia":         "Croatia",
-    "Curaçao":         "Curacao",
-    "Egito":           "Egypt",
-    "Escócia":         "Scotland",
-    "Espanha":         "Spain",
-    "França":          "France",
-    "Haiti":           "Haiti",
-    "Inglaterra":      "England",
-    "Iraque":          "Iraq",
-    "Irã":             "Iran",
-    "Japão":           "Japan",
-    "México":          "Mexico",
-    "Noruega":         "Norway",
-    "Nova Zelândia":   "New Zealand",
-    "Paraguai":        "Paraguay",
-    "Portugal":        "Portugal",
-    "RD Congo":        "DR Congo",
-    "República Tcheca":"Czech Republic",
-    "Senegal":         "Senegal",
-    "Suécia":          "Sweden",
-    "Tunísia":         "Tunisia",
-    "Áustria":         "Austria",
+    # Anfitriões
+    "EUA":                  "United States",
+    "Canadá":               "Canada",
+    "México":               "Mexico",
+    # Europa (16)
+    "Alemanha":             "Germany",
+    "Inglaterra":           "England",
+    "França":               "France",
+    "Espanha":              "Spain",
+    "Portugal":             "Portugal",
+    "Bélgica":              "Belgium",
+    "Países Baixos":        "Netherlands",
+    "Croácia":              "Croatia",
+    "Noruega":              "Norway",
+    "Áustria":              "Austria",
+    "Suíça":                "Switzerland",
+    "Escócia":              "Scotland",
+    "Turquia":              "Türkiye",
+    "República Checa":      "Czech Republic",
+    "Suécia":               "Sweden",
+    "Bósnia-Herzegovina":   "Bosnia-Herzegovina",
+    # América do Sul (6)
+    "Argentina":            "Argentina",
+    "Brasil":               "Brazil",
+    "Colômbia":             "Colombia",
+    "Equador":              "Ecuador",
+    "Paraguai":             "Paraguay",
+    "Uruguai":              "Uruguay",
+    # África (10)
+    "Marrocos":             "Morocco",
+    "Tunísia":              "Tunisia",
+    "Egito":                "Egypt",
+    "Argélia":              "Algeria",
+    "Gana":                 "Ghana",
+    "Cabo Verde":           "Cape Verde",
+    "África do Sul":        "South Africa",
+    "Costa do Marfim":      "Cote d'Ivoire",
+    "Senegal":              "Senegal",
+    "RD Congo":             "DR Congo",       # qualificado via play-off intercontinental
+    # Ásia (8)
+    "Japão":                "Japan",
+    "Coreia do Sul":        "Korea",
+    "Irã":                  "Iran",
+    "Austrália":            "Australia",
+    "Jordânia":             "Jordan",
+    "Uzbequistão":          "Uzbekistan",
+    "Catar":                "Qatar",
+    "Arábia Saudita":       "Saudi Arabia",
+    "Iraque":               "Iraq",
+    # CONCACAF (5)
+    "Haiti":                "Haiti",
+    "Panamá":               "Panama",
+    "Curaçao":              "Curacao",
+    # Oceânia (1)
+    "Nova Zelândia":        "New Zealand",
 }
 
 # Risco biomecânico calculado dos dados reais (escala 1–6, baseado em dias_parado médio)
@@ -121,19 +147,69 @@ RISCO_BIO_POR_POSICAO = {
     "Second Striker":      1.0,
 }
 
-# Contexto logístico por país (de calendario_selecoes.csv)
+# Contexto logístico por país
+# Altitude das sedes do Mundial 2026 (EUA/Canadá/México)
+# Sedes: Dallas 139m, Los Angeles 71m, New York 3m, Miami 0m,
+#         San Francisco 16m, Seattle 52m, Boston 9m, Atlanta 274m,
+#         Houston 15m, Kansas City 270m, Philadelphia 12m, Vancouver 0m,
+#         Toronto 76m, Guadalajara 1566m, Monterrey 540m, Cidade do México 2240m
 LOGISTICA = {
-    "Portugal":       {"descanso": 5.0, "altitude": 12.0,   "jogos": 3},
-    "RD Congo":       {"descanso": 5.0, "altitude": 12.0,   "jogos": 3},
-    "Colômbia":       {"descanso": 5.0, "altitude": 1.0,    "jogos": 3},
-    "México":         {"descanso": 5.5, "altitude": 2240.0, "jogos": 3},
-    "Brasil":         {"descanso": 5.2, "altitude": 12.0,   "jogos": 3},
-    "Alemanha":       {"descanso": 5.0, "altitude": 12.0,   "jogos": 3},
-    "França":         {"descanso": 5.0, "altitude": 65.0,   "jogos": 3},
-    "Argentina":      {"descanso": 5.0, "altitude": 265.0,  "jogos": 3},
-    "Inglaterra":     {"descanso": 5.0, "altitude": 130.0,  "jogos": 3},
+    # Anfitriões
+    "EUA":                  {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Canadá":               {"descanso": 5.0, "altitude": 38.0,   "jogos": 3},
+    "México":               {"descanso": 5.5, "altitude": 2240.0, "jogos": 3},
+    # Europa
+    "Alemanha":             {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Inglaterra":           {"descanso": 5.0, "altitude": 130.0,  "jogos": 3},
+    "França":               {"descanso": 5.0, "altitude": 65.0,   "jogos": 3},
+    "Espanha":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Portugal":             {"descanso": 5.0, "altitude": 12.0,   "jogos": 3},
+    "Bélgica":              {"descanso": 5.0, "altitude": 12.0,   "jogos": 3},
+    "Países Baixos":        {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Croácia":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Noruega":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Áustria":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Suíça":                {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Escócia":              {"descanso": 5.0, "altitude": 130.0,  "jogos": 3},
+    "Turquia":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "República Checa":      {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Suécia":               {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Bósnia-Herzegovina":   {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    # América do Sul
+    "Argentina":            {"descanso": 5.0, "altitude": 265.0,  "jogos": 3},
+    "Brasil":               {"descanso": 5.2, "altitude": 12.0,   "jogos": 3},
+    "Colômbia":             {"descanso": 5.0, "altitude": 1.0,    "jogos": 3},
+    "Equador":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Paraguai":             {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Uruguai":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    # África
+    "Marrocos":             {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Tunísia":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Egito":                {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Argélia":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Gana":                 {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Cabo Verde":           {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "África do Sul":        {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Costa do Marfim":      {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Senegal":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "RD Congo":             {"descanso": 5.0, "altitude": 12.0,   "jogos": 3},
+    # Ásia
+    "Japão":                {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Coreia do Sul":        {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Irã":                  {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Austrália":            {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Jordânia":             {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Uzbequistão":          {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Catar":                {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Arábia Saudita":       {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    # CONCACAF
+    "Haiti":                {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Panamá":               {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    "Curaçao":              {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
+    # Oceânia
+    "Nova Zelândia":        {"descanso": 5.0, "altitude": 71.0,   "jogos": 3},
 }
-DEFAULT_LOG = {"descanso": 5.0, "altitude": 12.0, "jogos": 3}
+DEFAULT_LOG = {"descanso": 5.0, "altitude": 71.0, "jogos": 3}
 
 POSICOES_EN = [
     "Attacking Midfield", "Central Midfield", "Centre-Back", "Centre-Forward",
